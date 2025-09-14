@@ -14,33 +14,43 @@ const inventorySchema = new mongoose.Schema({
     courtesies: [{ productId: mongoose.Schema.Types.ObjectId, name: String, quantity: Number, estimatedValue: Number }],
     employeeConsumption: [{ productId: mongoose.Schema.Types.ObjectId, name: String, quantity: Number, estimatedValue: Number }],
     
-    // --- NUEVOS CAMPOS ---
-    
-    // 1. Para registrar ventas fiadas (cuentas por cobrar)
+    // --- CAMPOS ADICIONALES DE OPERACIÓN ---
     receivables: [{
         customerName: { type: String, required: true },
-        description: { type: String, required: true }, // Ej: "1 Arepa de carne, 1 Coca-Cola"
+        description: { type: String, required: true },
         amount: { type: Number, required: true },
-        isPaid: { type: Boolean, default: false } // Para seguimiento futuro
+        isPaid: { type: Boolean, default: false }
     }],
-
-    // 2. Para registrar descuentos especiales
     discounts: [{
-        description: { type: String, required: true }, // Ej: "Descuento a cliente frecuente"
+        description: { type: String, required: true },
         originalAmount: { type: Number, required: true },
         finalAmount: { type: Number, required: true }
     }],
-
-    // 3. Para reconocer a colaboradores externos
     collaborations: [{
         personName: { type: String, required: true },
-        type: { type: String, enum: ['PRODUCT', 'CASH'], required: true }, // Se le dio producto o dinero
-        description: { type: String }, // Ej: "Ayuda en la parrilla", "Gaseosa por favor"
-        value: { type: Number, required: true } // Valor del producto o el monto en efectivo
+        type: { type: String, enum: ['PRODUCT', 'CASH'], required: true },
+        description: { type: String },
+        value: { type: Number, required: true }
     }],
-
-    // --- FIN DE NUEVOS CAMPOS ---
-
+    payroll: [{
+        employeeId: { 
+            type: mongoose.Schema.Types.ObjectId, 
+            ref: 'User', 
+            required: true 
+        },
+        amountPaid: { 
+            type: Number, 
+            required: true 
+        }
+    }],
+    damaged: {
+        arepas: { type: Number, default: 0 },
+        panes: { type: Number, default: 0 },
+        bebidas: { type: Number, default: 0 }
+    },
+    sodaForSauce: { type: Number, default: 0 },
+    
+    // --- FIN DE CAMPOS ADICIONALES ---
     requestsForNextDay: [{ item: String, quantity: Number }],
     notes: String,
     meta: {

@@ -72,3 +72,31 @@ export const deleteInventory = async (req, res) => {
     res.status(500).json({ message: 'Error al eliminar el inventario', error });
   }
 };
+
+// Obtener una plantilla para el nuevo inventario con datos del día anterior
+export const getInventoryTemplate = async (req, res) => {
+  try {
+    // 1. Buscar el último inventario registrado, ordenando por fecha descendente
+    const lastInventory = await Inventory.findOne().sort({ date: -1 });
+
+    let template = {};
+
+    if (lastInventory) {
+      // 2. Si existe un inventario anterior, mapear los valores finales a los iniciales
+      template = {
+        start: {
+          arepasInitial: lastInventory.end.arepasRemaining,
+          panesInitial: lastInventory.end.panesRemaining,
+          gaseosasInitial: lastInventory.end.gaseosasRemaining,
+          aguasInitial: lastInventory.end.aguasRemaining,
+        },
+      };
+    }
+    // 3. Si no existe (es el primer inventario), se devolverá un objeto vacío
+    //    y el frontend mostrará los campos en 0.
+
+    res.status(200).json(template);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al generar la plantilla de inventario', error });
+  }
+};
