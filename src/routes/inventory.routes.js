@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createInventory, getInventories, updateInventory, deleteInventory } from '../controllers/inventory.controller.js';
+import { createInventory, getInventories, updateInventory, deleteInventory, getActiveInventory, getInventoryTemplate } from '../controllers/inventory.controller.js';
 import { verifyToken, isAdmin } from '../middleware/auth.middleware.js';
 
 const router = Router();
@@ -7,6 +7,7 @@ const router = Router();
 // Nueva ruta para obtener la plantilla
 // Debe ir antes de rutas con parámetros como /:id para evitar conflictos
 router.get('/template', verifyToken, getInventoryTemplate);
+router.get('/active', verifyToken, getActiveInventory);
 
 // Rutas accesibles para ambos roles (Admin y Empleado)
 router.get('/', verifyToken, getInventories);

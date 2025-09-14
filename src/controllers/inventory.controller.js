@@ -7,6 +7,11 @@ export const createInventory = async (req, res) => {
   const { expenses, ...inventoryData } = req.body;
 
   try {
+    // --- NUEVA LÓGICA ---
+    // Antes de crear uno nuevo, cerramos cualquier otro inventario que esté activo.
+    await Inventory.updateMany({ status: 'ACTIVE' }, { status: 'CLOSED' });
+    // --- FIN DE LA NUEVA LÓGICA ---
+
     // 1. Crear el documento principal de inventario
     const newInventory = new Inventory({
       ...inventoryData,
@@ -49,17 +54,17 @@ export const getInventories = async (req, res) => {
 
 // Actualizar un inventario
 export const updateInventory = async (req, res) => {
-    try {
-        const updateData = {
-            ...req.body,
-            'meta.updatedBy': req.user.id
-        };
-        const updatedInventory = await Inventory.findByIdAndUpdate(req.params.id, updateData, { new: true });
-        if (!updatedInventory) return res.status(404).json({ message: 'Inventario no encontrado' });
-        res.status(200).json(updatedInventory);
-    } catch (error) {
-        res.status(500).json({ message: 'Error al actualizar el inventario', error });
-    }
+  try {
+    const updateData = {
+      ...req.body,
+      'meta.updatedBy': req.user.id
+    };
+    const updatedInventory = await Inventory.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!updatedInventory) return res.status(404).json({ message: 'Inventario no encontrado' });
+    res.status(200).json(updatedInventory);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al actualizar el inventario', error });
+  }
 };
 
 // Eliminar un inventario (solo Admin)
@@ -98,5 +103,15 @@ export const getInventoryTemplate = async (req, res) => {
     res.status(200).json(template);
   } catch (error) {
     res.status(500).json({ message: 'Error al generar la plantilla de inventario', error });
+  }
+};
+
+// Obtener el inventario activo (si existe)
+export const getActiveInventory = async (req, res) => {
+  try {
+    const activeInventory = await Inventory.findOne({ status: 'ACTIVE' });
+    res.status(200).json(activeInventory);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener el inventario activo', error });
   }
 };
