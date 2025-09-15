@@ -10,7 +10,7 @@ const inventorySchema = new mongoose.Schema({
     end: {
         arepasRemaining: Number, panesRemaining: Number, gaseosasRemaining: Number, aguasRemaining: Number
     },
-    transfers: [{ time: String, amount: Number, reference: String }],
+    totalTransfers: { type: Number, default: 0 },
     courtesies: [{ productId: mongoose.Schema.Types.ObjectId, name: String, quantity: Number, estimatedValue: Number }],
     employeeConsumption: [{ productId: mongoose.Schema.Types.ObjectId, name: String, quantity: Number, estimatedValue: Number }],
 
@@ -49,8 +49,6 @@ const inventorySchema = new mongoose.Schema({
         bebidas: { type: Number, default: 0 }
     },
     sodaForSauce: { type: Number, default: 0 },
-
-    // --- FIN DE CAMPOS ADICIONALES ---
     requestsForNextDay: [{ item: String, quantity: Number }],
     notes: String,
     meta: {
@@ -61,7 +59,8 @@ const inventorySchema = new mongoose.Schema({
         type: String,
         enum: ['ACTIVE', 'CLOSED'],
         default: 'ACTIVE'
-    }
+    },
+    finalCash: { type: Number, default: 0 }
 }, { timestamps: true });
 
 const Inventory = mongoose.model('Inventory', inventorySchema);

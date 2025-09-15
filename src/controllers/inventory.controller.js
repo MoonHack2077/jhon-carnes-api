@@ -21,20 +21,20 @@ export const createInventory = async (req, res) => {
     await newInventory.save();
 
     // 2. Lógica especial: si se enviaron gastos, crearlos como documentos de 'Purchase'
-    if (expenses && expenses.length > 0) {
-      const purchasePromises = expenses.map(expense => {
-        const purchaseDoc = new Purchase({
-          date: newInventory.date,
-          supplier: expense.category || 'Gasto diario',
-          items: [{ name: expense.description, unitPrice: expense.amount, quantity: 1 }],
-          total: expense.amount,
-          fromInventory: true, // Marcamos que viene de un registro de inventario
-          createdBy: req.user.id,
-        });
-        return purchaseDoc.save();
-      });
-      await Promise.all(purchasePromises);
-    }
+    // if (expenses && expenses.length > 0) {
+    //   const purchasePromises = expenses.map(expense => {
+    //     const purchaseDoc = new Purchase({
+    //       date: newInventory.date,
+    //       supplier: expense.category || 'Gasto diario',
+    //       items: [{ name: expense.description, unitPrice: expense.amount, quantity: 1 }],
+    //       total: expense.amount,
+    //       fromInventory: true, // Marcamos que viene de un registro de inventario
+    //       createdBy: req.user.id,
+    //     });
+    //     return purchaseDoc.save();
+    //   });
+    //   await Promise.all(purchasePromises);
+    // }
 
     res.status(201).json(newInventory);
 
@@ -56,15 +56,26 @@ export const getInventories = async (req, res) => {
 // Actualizar un inventario
 export const updateInventory = async (req, res) => {
   try {
-    const updateData = {
-      ...req.body,
-      'meta.updatedBy': req.user.id
-    };
+    const updateData = req.body;
+
+    // Forma segura de añadir la información de 'quién actualizó'
+    // 1. Aseguramos que el objeto 'meta' exista.
+    if (!updateData.meta) {
+      updateData.meta = {};
+    }
+    // 2. Asignamos la propiedad 'updatedBy' dentro del objeto 'meta'.
+    updateData.meta.updatedBy = req.user.id;
+
+    // Mongoose ahora recibe un objeto limpio y sin conflictos
     const updatedInventory = await Inventory.findByIdAndUpdate(req.params.id, updateData, { new: true });
+
     if (!updatedInventory) return res.status(404).json({ message: 'Inventario no encontrado' });
+    
     res.status(200).json(updatedInventory);
   } catch (error) {
-    res.status(500).json({ message: 'Error al actualizar el inventario', error });
+    // Si algo sale mal, devolvemos el error específico para depuración
+    console.error(error); // Es bueno loguear el error completo en el servidor
+    res.status(500).json({ message: 'Error al actualizar el inventario', error: error.message });
   }
 };
 
@@ -82,27 +93,28 @@ export const deleteInventory = async (req, res) => {
 // Obtener una plantilla para el nuevo inventario con datos del día anterior
 export const getInventoryTemplate = async (req, res) => {
   try {
-    // 1. Buscar el último inventario registrado, ordenando por fecha descendente
-    const lastInventory = await Inventory.findOne().sort({ date: -1 });
+    // CAMBIO 1: Ahora busca el último inventario CERRADO.
+    const lastInventory = await Inventory.findOne({ status: 'CLOSED' }).sort({ date: -1 });
 
     let template = {};
 
     if (lastInventory) {
-      // 2. Si existe un inventario anterior, mapear los valores finales a los iniciales
+      // CAMBIO 2: Usamos 'optional chaining' (?.) y '|| 0' para evitar errores
+      // si un campo del inventario anterior estaba vacío.
       template = {
         start: {
-          arepasInitial: lastInventory.end.arepasRemaining,
-          panesInitial: lastInventory.end.panesRemaining,
-          gaseosasInitial: lastInventory.end.gaseosasRemaining,
-          aguasInitial: lastInventory.end.aguasRemaining,
-        },
+          arepasInitial: lastInventory.end?.arepasRemaining || 0,
+          panesInitial: lastInventory.end?.panesRemaining || 0,
+          gaseosasInitial: lastInventory.end?.gaseosasRemaining || 0,
+          aguasInitial: lastInventory.end?.aguasRemaining || 0,
+        }
       };
     }
-    // 3. Si no existe (es el primer inventario), se devolverá un objeto vacío
-    //    y el frontend mostrará los campos en 0.
-
+    
     res.status(200).json(template);
-  } catch (error) {
+  } catch (error)
+ {
+    console.error("Error al generar plantilla:", error);
     res.status(500).json({ message: 'Error al generar la plantilla de inventario', error });
   }
 };
@@ -139,5 +151,28 @@ export const getInventoryById = async (req, res) => {
     res.status(200).json(inventory);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener el inventario', error });
+  }
+};
+
+export const closeInventory = async (req, res) => {
+  try {
+    // 1. Primero, actualizamos el inventario con los últimos datos del formulario
+    const updatedInventory = await Inventory.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, status: 'CLOSED' }, // Guardamos el body Y cambiamos el estado
+      { new: true }
+    );
+
+    if (!updatedInventory) return res.status(404).json({ message: 'Inventario no encontrado' });
+
+    // 2. Ahora, con el inventario ya actualizado, movemos los gastos a Compras
+    const purchasesFromInventory = await Purchase.find({ inventoryId: updatedInventory._id });
+    // (Este paso es más una formalidad ahora que los creamos en tiempo real,
+    // pero lo mantenemos por si se necesita lógica adicional en el futuro)
+
+    res.status(200).json({ message: 'Inventario guardado y cerrado exitosamente.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al cerrar el inventario', error: error.message });
   }
 };

@@ -34,3 +34,12 @@ export const updatePurchase = async (req, res) => {
     res.status(500).json({ message: 'Error al actualizar la compra', error });
   }
 };
+
+export const getPurchasesByInventory = async (req, res) => {
+  try {
+    const purchases = await Purchase.find({ inventoryId: req.params.inventoryId });
+    res.status(200).json(purchases);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener las compras por inventario', error });
+  }
+};

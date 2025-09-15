@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createPurchase, getPurchases, updatePurchase } from '../controllers/purchase.controller.js';
+import { createPurchase, getPurchases, getPurchasesByInventory, updatePurchase } from '../controllers/purchase.controller.js';
 import { verifyToken, isAdmin } from '../middlewares/auth.middleware.js';
 
 const router = Router();
@@ -15,5 +15,7 @@ router.get('/', getPurchases);
 
 // PUT    /api/purchases/:id
 router.put('/:id', updatePurchase);
+
+router.get('/by-inventory/:inventoryId', verifyToken, getPurchasesByInventory);
 
 export default router;
