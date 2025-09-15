@@ -15,6 +15,7 @@ export const createInventory = async (req, res) => {
     // 1. Crear el documento principal de inventario
     const newInventory = new Inventory({
       ...inventoryData,
+      status: 'ACTIVE',
       'meta.createdBy': req.user.id
     });
     await newInventory.save();
