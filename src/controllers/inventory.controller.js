@@ -116,3 +116,28 @@ export const getActiveInventory = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener el inventario activo', error });
   }
 };
+
+export const getInventoriesByMonth = async (req, res) => {
+  try {
+    const { year, month } = req.query; // Ej: year=2025, month=8 (Septiembre, es base 0)
+    const startDate = new Date(year, month, 1);
+    const endDate = new Date(year, parseInt(month) + 1, 1);
+
+    const inventories = await Inventory.find({
+      date: { $gte: startDate, $lt: endDate }
+    });
+    res.status(200).json(inventories);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener inventarios del mes', error });
+  }
+};
+
+export const getInventoryById = async (req, res) => {
+  try {
+    const inventory = await Inventory.findById(req.params.id);
+    if (!inventory) return res.status(404).json({ message: 'Inventario no encontrado' });
+    res.status(200).json(inventory);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener el inventario', error });
+  }
+};

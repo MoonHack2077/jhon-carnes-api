@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createInventory, getInventories, updateInventory, deleteInventory, getActiveInventory, getInventoryTemplate } from '../controllers/inventory.controller.js';
+import { createInventory, getInventories, updateInventory, deleteInventory, getActiveInventory, getInventoryTemplate, getInventoriesByMonth, getInventoryById } from '../controllers/inventory.controller.js';
 import { verifyToken, isAdmin } from '../middlewares/auth.middleware.js';
 
 const router = Router();
@@ -13,6 +13,8 @@ router.get('/active', verifyToken, getActiveInventory);
 router.get('/', verifyToken, getInventories);
 router.post('/', verifyToken, createInventory);
 router.put('/:id', verifyToken, updateInventory);
+router.get('/month', verifyToken, getInventoriesByMonth);
+router.get('/:id', verifyToken, getInventoryById); // Colócala después de las rutas específicas como '/active' o '/month'
 
 // Ruta accesible SOLO para Admin
 router.delete('/:id', [verifyToken, isAdmin], deleteInventory);
