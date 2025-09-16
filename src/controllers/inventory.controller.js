@@ -131,16 +131,24 @@ export const getActiveInventory = async (req, res) => {
 
 export const getInventoriesByMonth = async (req, res) => {
   try {
-    const { year, month } = req.query; // Ej: year=2025, month=8 (Septiembre, es base 0)
-    const startDate = new Date(year, month, 1);
-    const endDate = new Date(year, parseInt(month) + 1, 1);
+    // Convertimos los parámetros a números enteros
+    const year = parseInt(req.query.year);
+    const month = parseInt(req.query.month);
 
+    // --- LÓGICA CORREGIDA AQUÍ ---
+    // Usamos Date.UTC() para crear las fechas en el estándar universal,
+    // ignorando la zona horaria del servidor.
+    const startDate = new Date(Date.UTC(year, month, 1));
+    const endDate = new Date(Date.UTC(year, month + 1, 1));
+    
     const inventories = await Inventory.find({
       date: { $gte: startDate, $lt: endDate }
     });
+    
     res.status(200).json(inventories);
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener inventarios del mes', error });
+    console.error("Error al obtener inventarios del mes:", error);
+    res.status(500).json({ message: 'Error al obtener inventarios del mes', error: error.message });
   }
 };
 
